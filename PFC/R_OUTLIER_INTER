@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-FS = 1000.0
-ARQUIVO = "EMG1000_1.csv"   # ou "EMG500.csv"
+FS = 500.0
+ARQUIVO = "data/piscada_dupla_500_diferencial_2.csv"   # ou "EMG500.csv"
 
 # Limites assimétricos
-LIM_INF = -0.005
-LIM_SUP =  0.006
+LIM_INF = -0.002
+LIM_SUP =  0.001
 
 # Zoom (opcional)
 T0 = 0

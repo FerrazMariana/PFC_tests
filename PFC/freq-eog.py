@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500.0
-ARQUIVO = "EMG500.csv"
+ARQUIVO = "data/piscada_dupla_500_diferencial_1.csv"
 
 # Banda (ajuste se quiser)
 F_LOW  = 100   # Hz

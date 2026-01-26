@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500.0
-ARQUIVO = "ECG500_1.csv"   # troque aqui
+ARQUIVO = "data/ECG500_1.csv"   # troque aqui
 COLUNA = 0
 
 # Corte superior (high-frequency filter)

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500.0
-ARQUIVO = "EMG500_1.csv"
+ARQUIVO = "data/piscada_dupla_500_diferencial_1.csv"
 
 x = np.genfromtxt(ARQUIVO, delimiter=",", dtype=float)
 if x.ndim > 1:

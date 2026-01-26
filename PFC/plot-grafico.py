@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 fs = 500  # Hz
-arquivo = "EMG1000.csv"
+arquivo = "data/piscada_dupla_500_diferencial_1.csv"
 
 x = pd.read_csv(arquivo, header=None).iloc[:, 0].astype(float).to_numpy()
 t = np.arange(len(x)) / fs

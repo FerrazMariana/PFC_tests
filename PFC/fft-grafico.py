@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 FS = 1000.0  # Hz
-ARQUIVO = "teste_braco.csv"
+ARQUIVO = "data/teste_braco.csv"
 
 # --- carrega 1 coluna numérica do CSV (sem pandas) ---
 x = np.genfromtxt(ARQUIVO, delimiter=",", dtype=float)
