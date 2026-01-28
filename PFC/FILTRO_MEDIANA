@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt, medfilt
 
 FS = 500.0
-ARQUIVO = "ECG500_1.csv"  # seu CSV (1 coluna)
+ARQUIVO = "data/.csv"  # seu CSV (1 coluna)
 
 # Rejeita-faixa (rede elétrica)
 NOTCH_LOW  = 60.0

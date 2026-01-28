@@ -6,7 +6,7 @@ FS = 500.0
 ARQUIVO = "data/piscada_dupla_500_diferencial_1.csv"
 
 # Banda (ajuste se quiser)
-F_LOW  = 100   # Hz
+F_LOW  = 0.3   # Hz
 F_HIGH = 200  # Hz
 ORDER_BANDPASS = 4
 

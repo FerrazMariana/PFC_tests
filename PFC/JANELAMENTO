@@ -1,0 +1,27 @@
+import numpy as np
+import pandas as pd
+
+#ARQUIVO RESPONSÁVEL POR CRIAR O JANELAMENTO, DE 250MS. ELE CRIA UMA COLUNA NO DF E CADA JANELA RECEBE UM NOMERO, QUE COMEÇA EM 1 E VAI SENDO INCREMENTADO A 
+#CADA NOVA JANELA
+
+
+ARQUIVO_ENTRADA = "data/data_filtrado/d_p_d_500_1m_5_filtrado.csv"  
+ARQUIVO_SAIDA   = "data/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_filtrado_janela.csv"
+JANELA_S = 0.500
+
+df = pd.read_csv(ARQUIVO_ENTRADA)
+
+tempo_col = df.columns[0]
+t = df[tempo_col].astype(float).to_numpy()
+
+# referência: início do arquivo (primeiro tempo)
+t0 = float(t[0])
+
+# janela 1: [t0, t0+0.250), janela 2: [t0+0.250, t0+0.500), ...
+janela_idx = np.floor((t - t0) / JANELA_S).astype(int) + 1
+
+df["janela"] = janela_idx
+df.to_csv(ARQUIVO_SAIDA, index=False)
+
+print(f"Salvo em: {ARQUIVO_SAIDA}")
+print(f"Total de janelas: {df['janela'].max()}")

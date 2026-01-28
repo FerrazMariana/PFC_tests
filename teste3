@@ -1,0 +1,187 @@
+import numpy as np
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
+from sklearn.metrics import classification_report, confusion_matrix
+import joblib
+
+
+# =========================
+# 1) Feature extraction
+# =========================
+def extract_features(x: np.ndarray) -> dict:
+    x = np.asarray(x, dtype=np.float64)
+    if x.size < 3:
+        return {
+            "n": int(x.size),
+            "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "ptp": 0.0,
+            #"rms": 0.0, "energy": 0.0,
+            "abs_mean": 0.0, "abs_max": 0.0,
+            "skew": 0.0, "kurt": 0.0,
+            "dx_abs_mean": 0.0, "dx_abs_max": 0.0,
+            "zcr_median": 0.0
+        }
+
+    mean = float(np.mean(x))
+    std = float(np.std(x, ddof=1)) if x.size > 1 else 0.0
+    xmin = float(np.min(x))
+    xmax = float(np.max(x))
+    ptp = float(xmax - xmin)
+
+    rms = float(np.sqrt(np.mean(x * x)))
+    energy = float(np.sum(x * x))
+
+    abs_mean = float(np.mean(np.abs(x)))
+    abs_max = float(np.max(np.abs(x)))
+
+    s = pd.Series(x)
+    skew = float(s.skew()) if x.size >= 3 else 0.0
+    kurt = float(s.kurt()) if x.size >= 4 else 0.0
+
+    dx = np.diff(x)
+    dx_abs_mean = float(np.mean(np.abs(dx)))
+    dx_abs_max = float(np.max(np.abs(dx)))
+
+    med = np.median(x)
+    signs = np.sign(x - med)
+    signs[signs == 0] = 1
+    zc = np.sum(signs[1:] != signs[:-1])
+    zcr_median = float(zc) / float(x.size - 1)
+
+    return {
+        "n": int(x.size),
+        "mean": mean, "std": std, "min": xmin, "max": xmax, "ptp": ptp,
+        #"rms": rms, "energy": energy,
+        "abs_mean": abs_mean, "abs_max": abs_max,
+        "skew": skew, "kurt": kurt,
+        "dx_abs_mean": dx_abs_mean, "dx_abs_max": dx_abs_max,
+        "zcr_median": zcr_median
+    }
+
+
+def to_binary_label(v) -> int:
+    if pd.isna(v):
+        return 0
+    if isinstance(v, (int, np.integer)):
+        return int(v != 0)
+    if isinstance(v, (float, np.floating)):
+        return int(v != 0.0)
+
+    s = str(v).strip().lower()
+    if s in ("1", "true", "t", "sim", "piscada", "blink", "yes", "y"):
+        return 1
+    if s in ("0", "false", "f", "nao", "não", "sem", "n", "noblink", "no"):
+        return 0
+
+    try:
+        return int(float(s) != 0.0)
+    except Exception:
+        return 0
+
+
+# =========================
+# 2) Load CSV and build dataset (1 sample per janela)
+# =========================
+paths = [
+    "data/d_m_o_500_1m_janela/classificados/dataset_movimento_olhos_500_1m_filtrado_classificado.csv",
+    "data/d_c_500_1m_janela/classificados/dataset_caretas_500_1m_filtrado_classificado.csv",
+    "data/d_p_d_500_1m_5_janela/classificados/d_p_d_500_1m_5_filtrado_classificado.csv",
+    "data/d_p_d_500_1m_4_janela/classificados/d_p_d_500_1m_4_filtrado_classificado.csv",
+    "data/d_p_d_500_1m_3_janela/classificados/d_p_d_500_1m_3_filtrado_classificado.csv",
+    "data/d_p_d_500_1m_2_janela/classificados/d_p_d_500_1m_2_filtrado_classificado.csv",
+    "data/d_p_d_500_1m_1_janela/classificados/d_p_d_500_1m_1_filtrado_classificado.csv",
+]
+
+dfs = []
+offset = 0
+for p in paths:
+    d = pd.read_csv(p)
+    d["janela"] = d["janela"].astype(int)
+    d["janela"] = d["janela"] + offset
+    offset = d["janela"].max()
+    dfs.append(d)
+
+df = pd.concat(dfs, ignore_index=True)
+
+required_cols = {"t_s", "sinal_filtrado", "janela", "classificacao"}
+missing = required_cols - set(df.columns)
+if missing:
+    raise ValueError(f"CSV sem colunas obrigatórias: {missing}")
+
+df = df.sort_values(["janela", "t_s"]).reset_index(drop=True)
+df["class_bin"] = df["classificacao"].apply(to_binary_label)
+
+rows = []
+for win_id, g in df.groupby("janela", sort=False):
+    x = g["sinal_filtrado"].to_numpy()
+    feats = extract_features(x)
+
+    # label da janela: maioria (mode)
+    y_win = int(g["class_bin"].mode().iloc[0]) if len(g) else 0
+    # alternativa que às vezes aumenta recall de piscada:
+    # y_win = int(g["class_bin"].max())
+
+    feats["janela"] = win_id
+    feats["y"] = y_win
+    rows.append(feats)
+
+feat_df = pd.DataFrame(rows)
+
+y = feat_df["y"].astype(int)
+X = feat_df.drop(columns=["y", "janela"])
+
+print("Amostras (janelas):", len(feat_df))
+print("Distribuição classes:\n", y.value_counts(normalize=True).rename("proporção"))
+
+
+# =========================
+# 3) Train/test split + SVM (LinearSVC leve)
+# =========================
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.25,
+    random_state=42,
+    stratify=y if y.nunique() > 1 else None
+)
+
+svm_model = Pipeline(steps=[
+    ("scaler", StandardScaler()),
+    ("clf", LinearSVC(
+        class_weight="balanced",
+        random_state=42,
+        C=1.0
+    ))
+])
+
+svm_model.fit(X_train, y_train)
+
+
+# =========================
+# 4) Evaluate
+# =========================
+y_pred = svm_model.predict(X_test)
+
+labels = [0, 1]
+label_names = ["nao_piscada", "piscada"]
+
+cm = confusion_matrix(y_test, y_pred, labels=labels)
+cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
+print("\nMatriz de confusão (linhas=real, colunas=predito):\n")
+print(cm_df)
+
+print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
+
+
+# =========================
+# 5) Save model + feature list
+# =========================
+artifact = {
+    "model": svm_model,
+    "feature_columns": list(X.columns)
+}
+
+joblib.dump(artifact, "svm_linear_piscada_eog.joblib")
+#print("\nModelo salvo em: svm_linear_piscada_eog.joblib")

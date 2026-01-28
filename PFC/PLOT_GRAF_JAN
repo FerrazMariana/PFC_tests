@@ -1,0 +1,64 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+ARQUIVO = "data/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_filtrado_janela.csv"
+COL_JANELA = "janela"
+
+df = pd.read_csv(ARQUIVO)
+
+tempo_col = df.columns[0]
+t = df[tempo_col].astype(float).to_numpy()
+
+# Colunas de sinal (todas exceto tempo e janela)
+cols_sinal = [c for c in df.columns if c not in (tempo_col, COL_JANELA)]
+if not cols_sinal:
+    raise ValueError("Não encontrei colunas de sinal para plotar (além de tempo e janela).")
+
+w = df[COL_JANELA].astype(int).to_numpy()
+w_min, w_max = int(w.min()), int(w.max())
+
+fig, ax = plt.subplots()
+
+# Plota os sinais
+for col in cols_sinal:
+    ax.plot(t, df[col].to_numpy(), label=col)
+
+# Janelas com sombreamento + linhas + rótulos
+for wi in range(w_min, w_max + 1):
+    mask = (w == wi)
+    if not np.any(mask):
+        continue
+
+    t_ini = t[mask][0]
+    t_fim = t[mask][-1]
+    t_mid = 0.5 * (t_ini + t_fim)
+
+    # sombreamento alternado
+    if wi % 2 == 0:
+        ax.axvspan(t_ini, t_fim, alpha=0.12)
+
+    # linhas de borda
+    ax.axvline(t_ini, linewidth=0.8)
+
+    # rótulo no topo (coordenada y em fração do eixo)
+    ax.text(
+        t_mid, 0.98, f"{wi}",
+        transform=ax.get_xaxis_transform(),
+        ha="center", va="top", fontsize=8
+    )
+
+# linha no fim da última janela (opcional)
+mask_last = (w == w_max)
+if np.any(mask_last):
+    ax.axvline(t[mask_last][-1], linewidth=0.8)
+
+ax.set_title(os.path.basename(ARQUIVO))
+ax.set_xlabel(tempo_col)
+ax.set_ylabel("Amplitude")
+ax.grid(True)
+if len(cols_sinal) > 1:
+    ax.legend()
+plt.tight_layout()
+plt.show()

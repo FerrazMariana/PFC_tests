@@ -1,44 +1,33 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-FS = 1000.0  # Hz
-ARQUIVO = "data/teste_braco.csv"
+FS = 500.0  # Hz
+ARQUIVO = "data/piscada_dupla_500_diferencial_1.csv"
 
-# --- carrega 1 coluna numérica do CSV (sem pandas) ---
+# --- carrega 1 coluna numérica ---
 x = np.genfromtxt(ARQUIVO, delimiter=",", dtype=float)
-if x.ndim > 1:  # se vier com mais de uma coluna, pega a primeira
+if x.ndim > 1:
     x = x[:, 0]
 x = x[np.isfinite(x)]
 
-# remove média (DC) para a FFT ficar mais útil
+# remove média (DC)
 x = x - np.mean(x)
 
-# --- FFT (apenas metade positiva) ---
+# --- FFT (metade positiva) ---
 N = len(x)
 X = np.fft.rfft(x)
 freq = np.fft.rfftfreq(N, d=1.0/FS)
 
-# magnitude (amplitude) normalizada
-mag = np.abs(X) / N
+# magnitude SEM normalização
+mag = np.abs(X)
 
-# --- plota no domínio do tempo e frequência ---
-t = np.arange(N) / FS
-
-plt.figure(figsize=(12, 4))
-plt.plot(t, x)
-plt.xlabel("Tempo (s)")
-plt.ylabel("Amplitude")
-plt.title("Sinal no tempo (média removida)")
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-
+# --- plota apenas a FFT ---
 plt.figure(figsize=(12, 4))
 plt.plot(freq, mag)
 plt.xlabel("Frequência (Hz)")
-plt.ylabel("|X(f)| (normalizado)")
-plt.title("FFT (magnitude)")
+plt.ylabel("|X(f)|")
+plt.title("FFT (magnitude) - sem normalização")
 plt.grid(True)
-plt.xlim(0, 300)  # EOG costuma estar bem abaixo disso; ajuste se quiser
+plt.xlim(0, 200)
 plt.tight_layout()
 plt.show()
