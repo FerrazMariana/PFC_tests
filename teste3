@@ -17,22 +17,17 @@ def extract_features(x: np.ndarray) -> dict:
     if x.size < 3:
         return {
             "n": int(x.size),
-            "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "ptp": 0.0,
-            #"rms": 0.0, "energy": 0.0,
+            "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0,
             "abs_mean": 0.0, "abs_max": 0.0,
             "skew": 0.0, "kurt": 0.0,
             "dx_abs_mean": 0.0, "dx_abs_max": 0.0,
-            "zcr_median": 0.0
+            "zcr_median": 0.0,
         }
 
     mean = float(np.mean(x))
     std = float(np.std(x, ddof=1)) if x.size > 1 else 0.0
     xmin = float(np.min(x))
     xmax = float(np.max(x))
-    ptp = float(xmax - xmin)
-
-    rms = float(np.sqrt(np.mean(x * x)))
-    energy = float(np.sum(x * x))
 
     abs_mean = float(np.mean(np.abs(x)))
     abs_max = float(np.max(np.abs(x)))
@@ -53,8 +48,7 @@ def extract_features(x: np.ndarray) -> dict:
 
     return {
         "n": int(x.size),
-        "mean": mean, "std": std, "min": xmin, "max": xmax, "ptp": ptp,
-        #"rms": rms, "energy": energy,
+        "mean": mean, "std": std, "min": xmin, "max": xmax,
         "abs_mean": abs_mean, "abs_max": abs_max,
         "skew": skew, "kurt": kurt,
         "dx_abs_mean": dx_abs_mean, "dx_abs_max": dx_abs_max,
@@ -86,13 +80,13 @@ def to_binary_label(v) -> int:
 # 2) Load CSV and build dataset (1 sample per janela)
 # =========================
 paths = [
-    "data/d_m_o_500_1m_janela/classificados/dataset_movimento_olhos_500_1m_filtrado_classificado.csv",
-    "data/d_c_500_1m_janela/classificados/dataset_caretas_500_1m_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_5_janela/classificados/d_p_d_500_1m_5_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_4_janela/classificados/d_p_d_500_1m_4_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_3_janela/classificados/d_p_d_500_1m_3_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_2_janela/classificados/d_p_d_500_1m_2_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_1_janela/classificados/d_p_d_500_1m_1_filtrado_classificado.csv",
+    "data/dados_crus/d_c_500_1m_janela/d_c_500_1m_classificado.csv",
+    "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_1_janela/d_p_d_500_1m_1_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_2_janela/d_p_d_500_1m_2_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_3_janela/d_p_d_500_1m_3_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_4_janela/d_p_d_500_1m_4_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_classificado.csv",
 ]
 
 dfs = []
@@ -122,7 +116,7 @@ for win_id, g in df.groupby("janela", sort=False):
     # label da janela: maioria (mode)
     y_win = int(g["class_bin"].mode().iloc[0]) if len(g) else 0
     # alternativa que às vezes aumenta recall de piscada:
-    # y_win = int(g["class_bin"].max())
+    #y_win = int(g["class_bin"].max())
 
     feats["janela"] = win_id
     feats["y"] = y_win
@@ -183,5 +177,5 @@ artifact = {
     "feature_columns": list(X.columns)
 }
 
-joblib.dump(artifact, "svm_linear_piscada_eog.joblib")
+#joblib.dump(artifact, "svm_linear_piscada_eog.joblib")
 #print("\nModelo salvo em: svm_linear_piscada_eog.joblib")

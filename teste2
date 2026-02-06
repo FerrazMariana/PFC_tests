@@ -84,13 +84,13 @@ def to_binary_label(v) -> int:
 # 2) Load CSV and build dataset (1 sample per janela)
 # =========================
 paths = [
-    "data/d_m_o_500_1m_janela/classificados/dataset_movimento_olhos_500_1m_filtrado_classificado.csv",
-    "data/d_c_500_1m_janela/classificados/dataset_caretas_500_1m_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_5_janela/classificados/d_p_d_500_1m_5_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_4_janela/classificados/d_p_d_500_1m_4_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_3_janela/classificados/d_p_d_500_1m_3_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_2_janela/classificados/d_p_d_500_1m_2_filtrado_classificado.csv",
-    "data/d_p_d_500_1m_1_janela/classificados/d_p_d_500_1m_1_filtrado_classificado.csv",
+    "data/dados_crus/d_c_500_1m_janela/d_c_500_1m_classificado.csv",
+    "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_1_janela/d_p_d_500_1m_1_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_2_janela/d_p_d_500_1m_2_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_3_janela/d_p_d_500_1m_3_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_4_janela/d_p_d_500_1m_4_classificado.csv",
+    "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_classificado.csv",
 ]
 
 dfs = []

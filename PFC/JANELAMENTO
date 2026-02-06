@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 
-#ARQUIVO RESPONSÁVEL POR CRIAR O JANELAMENTO, DE 250MS. ELE CRIA UMA COLUNA NO DF E CADA JANELA RECEBE UM NOMERO, QUE COMEÇA EM 1 E VAI SENDO INCREMENTADO A 
+#ARQUIVO RESPONSÁVEL POR CRIAR O JANELAMENTO, DE 500MS. ELE CRIA UMA COLUNA NO DF E CADA JANELA RECEBE UM NuMERO, QUE COMEÇA EM 1 E VAI SENDO INCREMENTADO A 
 #CADA NOVA JANELA
 
 
-ARQUIVO_ENTRADA = "data/data_filtrado/d_p_d_500_1m_5_filtrado.csv"  
-ARQUIVO_SAIDA   = "data/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_filtrado_janela.csv"
+ARQUIVO_ENTRADA = "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_s_outlier.csv"  
+ARQUIVO_SAIDA   = "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_janela.csv"
 JANELA_S = 0.500
 
 df = pd.read_csv(ARQUIVO_ENTRADA)

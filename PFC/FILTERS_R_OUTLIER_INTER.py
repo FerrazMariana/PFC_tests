@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500
-ARQUIVO = "data/tests/ECG500.csv"  # seu CSV (1 coluna)
+ARQUIVO = "data/dataset/dataset_movimento_olhos_500_1m.csv"  # seu CSV (1 coluna)
 
 # ---------- Limites de outlier (ajuste) ----------
 LIM_INF = -0.002
@@ -15,7 +15,7 @@ NOTCH_HIGH = 61.0
 ORDER_NOTCH = 4
 
 # Filtros como na figura
-LP = 200
+LP = 15
 HP_A = 0.5
 ORDER_HP = 4
 ORDER_LP = 4
@@ -93,7 +93,8 @@ f_a, mag_a = fft_mag(y_a, FS)
 plt.figure(figsize=(12, 9))
 
 plt.subplot(2, 1, 1)
-plt.plot(t[m], y_a[m], linewidth=0.9)
+#plt.plot(t[m], y_a[m], linewidth=0.9)
+plt.plot(t[m], x[m], linewidth=0.9)
 plt.title(f"(a) Bandstop {NOTCH_LOW:.0f}–{NOTCH_HIGH:.0f} Hz + HP={HP_A} Hz + LP={LP} Hz")
 plt.ylabel("Sinal")
 plt.grid(True)
@@ -114,9 +115,10 @@ plt.tight_layout()
 plt.show()
 
 # --------- Salvar apenas tempo e sinal final (y_a) ----------
-#OUT_CSV = "data/data_filtrado/d_p_d_500_1m_5_filtrado.csv"
+OUT_CSV = "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_s_outlier.csv"
 
 #dados = np.column_stack([t, y_a])  # tempo, sinal final
+#dados = np.column_stack([t, x])  # tempo, sinal final apenas sem os outliers
 #np.savetxt(OUT_CSV, dados, delimiter=",", header="t_s,sinal_filtrado", comments="")
 
 
