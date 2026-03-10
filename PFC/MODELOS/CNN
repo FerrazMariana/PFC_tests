@@ -1,0 +1,183 @@
+import os
+import random
+import numpy as np
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score, f1_score
+
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+
+# =========================
+# 0) Reprodutibilidade
+# =========================
+os.environ["TF_DETERMINISTIC_OPS"] = "1"
+SEED = 42
+os.environ["PYTHONHASHSEED"] = str(SEED)
+random.seed(SEED)
+np.random.seed(SEED)
+
+tf.keras.utils.set_random_seed(SEED)
+tf.config.experimental.enable_op_determinism()
+
+
+# =========================
+# 1) Helpers: fix length + preprocess
+# =========================
+def fix_length(x: np.ndarray, seq_len: int) -> np.ndarray:
+    x = np.asarray(x, dtype=np.float32)
+    n = x.size
+    if n == seq_len:
+        return x
+    if n > seq_len:
+        # recorte central
+        start = (n - seq_len) // 2
+        return x[start:start + seq_len]
+    # pad
+    out = np.zeros((seq_len,), dtype=np.float32)
+    out[:n] = x
+    return out
+
+def per_window_zscore(x: np.ndarray, eps: float = 1e-8) -> np.ndarray:
+    m = float(np.mean(x))
+    s = float(np.std(x))
+    return (x - m) / (s + eps)
+
+# =========================
+# 2) Load CSV
+# =========================
+
+SEQ_LEN = 250  # tamanho final por janela (amostras)
+
+dataset = "meu_arquivo4.csv"  
+df = pd.read_csv(dataset)
+
+
+# Monta X/y por janela
+X_list, y_list = [], []
+
+for win_id, g in df.groupby("janela", sort=False):
+    x = g["sinal_filtrado"].to_numpy(dtype=np.float32)
+    #x = fix_length(x, SEQ_LEN)
+    x = per_window_zscore(x)
+
+    # Se sua regra é “se existe piscada na janela, a janela é piscada”
+    y = int(g["class_bin"].max()) if len(g) else 0
+
+    X_list.append(x)
+    y_list.append(y)
+
+X = np.stack(X_list, axis=0)              # (N, SEQ_LEN)
+y = np.asarray(y_list, dtype=np.int32)    # (N,)
+
+X = X[..., np.newaxis]                    # (N, SEQ_LEN, 1)
+
+print("\nAmostras (janelas):", X.shape[0])
+vals, cnts = np.unique(y, return_counts=True)
+print("Distribuição y:", dict(zip(vals, cnts)))
+
+# =========================
+# 3) Split (train/test) + val estratificado
+# =========================
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.25,
+    random_state=42,
+    stratify=y if np.unique(y).size > 1 else None
+)
+
+classes = np.unique(y_train)
+cw = compute_class_weight(class_weight="balanced", classes=classes, y=y_train)
+class_weight = {int(c): float(w) for c, w in zip(classes, cw)}
+print("class_weight:", class_weight)
+
+# =========================
+# 4) Modelo CNN 1D (piscada = evento local -> MaxPooling global)
+# =========================
+def build_cnn_1d(seq_len: int) -> keras.Model:
+    inp = keras.Input(shape=(seq_len, 1))
+
+    x = layers.Conv1D(16, kernel_size=7, padding="same")(inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.MaxPool1D(pool_size=2)(x)
+
+    x = layers.Conv1D(32, kernel_size=5, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.MaxPool1D(pool_size=2)(x)
+
+    x = layers.Conv1D(64, kernel_size=3, padding="same")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.MaxPool1D(pool_size=2)(x)
+
+    x = layers.Dropout(0.25)(x)
+
+    # Melhor para evento curto do que average
+    x = layers.GlobalMaxPooling1D()(x)
+
+    x = layers.Dense(64, activation="relu")(x)
+    x = layers.Dropout(0.25)(x)
+
+    out = layers.Dense(1, activation="sigmoid")(x)
+
+    model = keras.Model(inp, out)
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+        loss="binary_crossentropy",
+        metrics=[
+            keras.metrics.AUC(name="auc"),
+            keras.metrics.Precision(name="prec"),
+            keras.metrics.Recall(name="rec"),
+            "accuracy",
+        ],
+    )
+    return model
+
+model = build_cnn_1d(SEQ_LEN)
+model.summary()
+
+# =========================
+# 5) Treino
+# =========================
+
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_test, y_test),
+    epochs=200,
+    batch_size=64,
+    class_weight=class_weight,
+    shuffle=True,
+    verbose=1
+)
+
+# =========================
+# 6) Teste do modelo
+# =========================
+
+y_prob = model.predict(X_test, verbose=0).ravel()
+y_pred = (y_prob >= 0.8).astype(int)
+
+labels = [0, 1]
+label_names = ["nao_piscada", "piscada"]
+
+cm = confusion_matrix(y_test, y_pred, labels=labels)
+cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
+print("\nMatriz de confusão (linhas=real, colunas=predito):\n")
+print(cm_df)
+
+print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
+
+if np.unique(y_test).size > 1:
+    auc = roc_auc_score(y_test, y_prob)
+    print("\nROC-AUC:", float(auc))
+
+# =========================
+# 7) Salvar modelo
+# =========================
+#model.save("cnn_eog_blink.keras")
+#print("\nModelo salvo em: cnn_eog_blink.keras")

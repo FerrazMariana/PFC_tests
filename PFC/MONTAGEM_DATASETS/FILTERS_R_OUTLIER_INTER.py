@@ -114,10 +114,10 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-# --------- Salvar apenas tempo e sinal final (y_a) ----------
+# --------- Salvar apenas tempo e sinal ----------
 OUT_CSV = "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_s_outlier.csv"
 
-#dados = np.column_stack([t, y_a])  # tempo, sinal final
+#dados = np.column_stack([t, y_a])  # tempo, sinal final (COM TODOS OS FILTROS)
 #dados = np.column_stack([t, x])  # tempo, sinal final apenas sem os outliers
 #np.savetxt(OUT_CSV, dados, delimiter=",", header="t_s,sinal_filtrado", comments="")
 

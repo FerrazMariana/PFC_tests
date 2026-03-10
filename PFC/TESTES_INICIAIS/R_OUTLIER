@@ -1,0 +1,57 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+####
+#
+FS = 500.0
+ARQUIVO = "data/piscada_dupla_500_diferencial_1.csv"   # ou "EMG500.csv"
+
+# Limites assimétricos
+LIM_INF = -0.002
+LIM_SUP =  0.001
+
+# Zoom (opcional)
+T0 = 0
+T1 = 60  # None para tudo
+
+# ---------- Leitura ----------
+x = np.genfromtxt(ARQUIVO, delimiter=",", dtype=float)
+if x.ndim > 1:
+    x = x[:, 0]
+x = x[np.isfinite(x)]
+
+# (Opcional) cuidado: centralizar pode mudar a assimetria
+# x = x - np.mean(x)
+
+t = np.arange(len(x)) / FS
+m = (t >= T0) & (t <= T1) if T1 is not None else slice(None)
+
+# ---------- Outliers ----------
+out = (x < LIM_INF) | (x > LIM_SUP)
+print(f"Outliers removidos: {np.sum(out)} / {len(out)} ({100*np.mean(out):.2f}%)")
+
+# ---------- Excluir outliers (mantendo referência de tempo original) ----------
+idx = np.arange(len(x))
+idx_keep = idx[~out]
+x_keep = x[~out]
+t_keep = idx_keep / FS
+
+m_keep = (t_keep >= T0) & (t_keep <= T1) if T1 is not None else slice(None)
+
+# ---------- Plot ----------
+plt.figure(figsize=(12,4))
+
+#plt.plot(t[m], x[m], linewidth=0.6, alpha=0.6, label="Original")
+plt.plot(t_keep[m_keep], x_keep[m_keep], linewidth=0.9, label="Sem outliers (excluídos)")
+
+
+plt.axhline(LIM_SUP, linewidth=0.8)
+plt.axhline(LIM_INF, linewidth=0.8)
+
+plt.xlabel("Tempo (s)")
+plt.ylabel("Sinal")
+plt.title(f"Original vs sem outliers (excluídos): x < {LIM_INF} ou x > {LIM_SUP}")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()

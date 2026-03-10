@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+FS = 500.0
+ARQUIVO = "data/tests/ECG500_1.csv"   # ou "EMG500.csv"
+
+# Limites assimétricos
+LIM_INF = -0.015
+LIM_SUP =  0.00015
+
+# Zoom (opcional)
+T0 = 0
+T1 = 60  # None para tudo
+
+# ---------- Leitura ----------
+x = np.genfromtxt(ARQUIVO, delimiter=",", dtype=float)
+if x.ndim > 1:
+    x = x[:, 0]
+x = x[np.isfinite(x)]
+
+# (Opcional) não centralize se isso atrapalhar sua assimetria
+# x = x - np.mean(x)
+
+# ---------- Outliers ----------
+out = (x < LIM_INF) | (x > LIM_SUP)
+
+x2 = x.copy()
+x2[out] = np.nan
+
+# ---------- Interpola para manter o mesmo tamanho ----------
+idx = np.arange(len(x2))
+good = np.isfinite(x2)
+if np.sum(good) >= 2:
+    x2[~good] = np.interp(idx[~good], idx[good], x2[good])
+else:
+    x2 = x.copy()  # caso extremo
+
+# ---------- Plot ----------
+t = np.arange(len(x)) / FS
+m = (t >= T0) & (t <= T1) if T1 is not None else slice(None)
+
+plt.figure(figsize=(12,4))
+#plt.plot(t[m], x[m],  linewidth=0.6, alpha=0.6, label="Original")
+plt.plot(t[m], x2[m], linewidth=0.9, label="Sem outliers (interp.)")
+
+
+plt.axhline(LIM_SUP, linewidth=0.8)
+plt.axhline(LIM_INF, linewidth=0.8)
+
+plt.xlabel("Tempo (s)")
+plt.ylabel("Sinal")
+plt.title(f"Remoção de outliers (assimétrico): x < {LIM_INF} ou x > {LIM_SUP}")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()

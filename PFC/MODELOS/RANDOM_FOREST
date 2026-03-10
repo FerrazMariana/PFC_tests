@@ -2,10 +2,8 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
 import joblib
 
 
@@ -19,6 +17,7 @@ def extract_features(x: np.ndarray) -> dict:
     """
     x = np.asarray(x, dtype=np.float64)
     if x.size < 3:
+        # janela pequena demais: retorna zeros (ou trate como erro)
         return {
             "n": int(x.size),
             "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "ptp": 0.0,
@@ -41,100 +40,61 @@ def extract_features(x: np.ndarray) -> dict:
     abs_mean = float(np.mean(np.abs(x)))
     abs_max = float(np.max(np.abs(x)))
 
+    # skew/kurt via pandas (evita depender de scipy)
     s = pd.Series(x)
     skew = float(s.skew()) if x.size >= 3 else 0.0
     kurt = float(s.kurt()) if x.size >= 4 else 0.0
 
+    # Derivada discreta
     dx = np.diff(x)
     dx_abs_mean = float(np.mean(np.abs(dx)))
     dx_abs_max = float(np.max(np.abs(dx)))
 
+    # Zero-crossing rate em torno da mediana (robusto a baseline)
     med = np.median(x)
     signs = np.sign(x - med)
+    # remove zeros para não contar trocas falsas
     signs[signs == 0] = 1
     zc = np.sum(signs[1:] != signs[:-1])
     zcr_median = float(zc) / float(x.size - 1)
 
     return {
-        "n": int(x.size),
+        #"n": int(x.size),
         "mean": mean, "std": std, "min": xmin, "max": xmax, "ptp": ptp,
-        "rms": rms, "energy": energy,
+        #"rms": rms, "energy": energy,
         "abs_mean": abs_mean, "abs_max": abs_max,
-        "skew": skew, "kurt": kurt,
-        "dx_abs_mean": dx_abs_mean, "dx_abs_max": dx_abs_max,
+        "skew": skew, 
+        "kurt": kurt,
+        #"dx_abs_mean": dx_abs_mean, "dx_abs_max": dx_abs_max,
         "zcr_median": zcr_median
     }
 
 
-def to_binary_label(v) -> int:
-    if pd.isna(v):
-        return 0
-    if isinstance(v, (int, np.integer)):
-        return int(v != 0)
-    if isinstance(v, (float, np.floating)):
-        return int(v != 0.0)
-
-    s = str(v).strip().lower()
-    if s in ("1", "true", "t", "sim", "piscada", "blink", "yes", "y"):
-        return 1
-    if s in ("0", "false", "f", "nao", "não", "sem", "n", "noblink", "no"):
-        return 0
-
-    try:
-        return int(float(s) != 0.0)
-    except Exception:
-        return 0
-
-
 # =========================
-# 2) Load CSV and build dataset (1 sample per janela)
+# 2) Load CSV 
 # =========================
-paths = [
-    "data/dados_crus/d_c_500_1m_janela/d_c_500_1m_classificado.csv",
-    "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_1_janela/d_p_d_500_1m_1_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_2_janela/d_p_d_500_1m_2_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_3_janela/d_p_d_500_1m_3_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_4_janela/d_p_d_500_1m_4_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_classificado.csv",
-]
 
-dfs = []
-offset = 0
+dataset = "meu_arquivo4.csv"  
+df = pd.read_csv(dataset)
 
-for p in paths:
-    d = pd.read_csv(p)
-
-    d["janela"] = d["janela"].astype(int)
-    d["janela"] = d["janela"] + offset
-    offset = d["janela"].max()
-
-    dfs.append(d)
-
-df = pd.concat(dfs, ignore_index=True)
-
-required_cols = {"t_s", "sinal_filtrado", "janela", "classificacao"}
-missing = required_cols - set(df.columns)
-if missing:
-    raise ValueError(f"CSV sem colunas obrigatórias: {missing}")
-
-df = df.sort_values(["janela", "t_s"]).reset_index(drop=True)
-df["class_bin"] = df["classificacao"].apply(to_binary_label)
-
+# Agrupa por janela: extrai features do sinal e define label pela moda
 rows = []
 for win_id, g in df.groupby("janela", sort=False):
     x = g["sinal_filtrado"].to_numpy()
     feats = extract_features(x)
 
-    # (opção atual) label por MAIORIA
-    y_win = int(g["class_bin"].mode().iloc[0]) if len(g) else 0
+    # label da janela: moda (maioria) de class_bin
+    y = int(g["class_bin"].mode().iloc[0]) if len(g) else 0
 
     feats["janela"] = win_id
-    feats["y"] = y_win
+    feats["y"] = y
     rows.append(feats)
 
 feat_df = pd.DataFrame(rows)
 
+
+
+# Features e alvo
 y = feat_df["y"].astype(int)
 X = feat_df.drop(columns=["y", "janela"])
 
@@ -143,7 +103,7 @@ print("Distribuição classes:\n", y.value_counts(normalize=True).rename("propor
 
 
 # =========================
-# 3) Train/test split + Logistic Regression (leve)
+# 3) Train/test split + Random Forest
 # =========================
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
@@ -152,49 +112,46 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y if y.nunique() > 1 else None
 )
 
-# Pipeline: padroniza e treina LR
-model = Pipeline(steps=[
-    ("scaler", StandardScaler()),
-    ("clf", LogisticRegression(
-        max_iter=5000,
-        class_weight="balanced",   # ajuda se piscada for rara
-        solver="lbfgs"             # padrão, bom e rápido
-    ))
-])
+rf = RandomForestClassifier(
+    n_estimators=400,
+    random_state=42,
+    n_jobs=-1,
+    class_weight="balanced_subsample",  # ajuda se piscada for rara
+    min_samples_leaf=2
+)
 
-model.fit(X_train, y_train)
-
+rf.fit(X_train, y_train)
 
 # =========================
 # 4) Evaluate
 # =========================
-y_pred = model.predict(X_test)
+y_prob = rf.predict_proba(X_test)[:, 1]
+y_pred = (y_prob >= 0.8).astype(int)
 
 labels = [0, 1]
 label_names = ["nao_piscada", "piscada"]
 
 cm = confusion_matrix(y_test, y_pred, labels=labels)
-cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
 
+cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
 print("\nMatriz de confusão (linhas=real, colunas=predito):\n")
 print(cm_df)
 
+#print("\nConfusion matrix:\n", confusion_matrix(y_test, y_pred))
 print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
 
 # AUC (se tiver as duas classes no teste)
 if y_test.nunique() == 2:
-    y_proba = model.predict_proba(X_test)[:, 1]
+    y_proba = rf.predict_proba(X_test)[:, 1]
     auc = roc_auc_score(y_test, y_proba)
     print(f"AUC: {auc:.4f}")
-
 
 # =========================
 # 5) Save model + feature list
 # =========================
 artifact = {
-    "model": model,
+    "model": rf,
     "feature_columns": list(X.columns)
 }
-
-#joblib.dump(artifact, "lr_piscada_eog.joblib")
-print("\nModelo salvo em: lr_piscada_eog.joblib")
+#joblib.dump(artifact, "rf_piscada_eog.joblib")
+#print("\nModelo salvo em: rf_piscada_eog.joblib")

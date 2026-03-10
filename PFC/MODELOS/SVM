@@ -56,57 +56,12 @@ def extract_features(x: np.ndarray) -> dict:
     }
 
 
-def to_binary_label(v) -> int:
-    if pd.isna(v):
-        return 0
-    if isinstance(v, (int, np.integer)):
-        return int(v != 0)
-    if isinstance(v, (float, np.floating)):
-        return int(v != 0.0)
-
-    s = str(v).strip().lower()
-    if s in ("1", "true", "t", "sim", "piscada", "blink", "yes", "y"):
-        return 1
-    if s in ("0", "false", "f", "nao", "não", "sem", "n", "noblink", "no"):
-        return 0
-
-    try:
-        return int(float(s) != 0.0)
-    except Exception:
-        return 0
-
-
 # =========================
-# 2) Load CSV and build dataset (1 sample per janela)
+# 2) Load CSV
 # =========================
-paths = [
-    "data/dados_crus/d_c_500_1m_janela/d_c_500_1m_classificado.csv",
-    "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_1_janela/d_p_d_500_1m_1_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_2_janela/d_p_d_500_1m_2_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_3_janela/d_p_d_500_1m_3_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_4_janela/d_p_d_500_1m_4_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_classificado.csv",
-]
 
-dfs = []
-offset = 0
-for p in paths:
-    d = pd.read_csv(p)
-    d["janela"] = d["janela"].astype(int)
-    d["janela"] = d["janela"] + offset
-    offset = d["janela"].max()
-    dfs.append(d)
-
-df = pd.concat(dfs, ignore_index=True)
-
-required_cols = {"t_s", "sinal_filtrado", "janela", "classificacao"}
-missing = required_cols - set(df.columns)
-if missing:
-    raise ValueError(f"CSV sem colunas obrigatórias: {missing}")
-
-df = df.sort_values(["janela", "t_s"]).reset_index(drop=True)
-df["class_bin"] = df["classificacao"].apply(to_binary_label)
+dataset = "meu_arquivo4.csv"
+df = pd.read_csv(dataset)
 
 rows = []
 for win_id, g in df.groupby("janela", sort=False):

@@ -1,0 +1,48 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+FS = 500.0
+ARQUIVO = "data/piscada_dupla_500_diferencial_1.csv"
+
+WIN_S = 0.1
+WIN = int(WIN_S * FS)
+if WIN < 1:
+    WIN = 1
+
+T0 = 0
+T1 = 60
+
+x = np.genfromtxt(ARQUIVO, delimiter=",", dtype=float)
+if x.ndim > 1:
+    x = x[:, 0]
+x = x[np.isfinite(x)]
+x = x - np.mean(x)
+
+LIM = 0.0006
+out = (x > LIM) | (x < -LIM)
+print(f"Outliers detectados: {np.sum(out)} / {len(x)} ({100*np.mean(out):.2f}%)")
+
+x2 = x.copy()
+x2[out] = np.nan
+
+idx = np.arange(len(x2))
+good = np.isfinite(x2)
+x2[~good] = np.interp(idx[~good], idx[good], x2[good])
+
+kernel = np.ones(WIN) / WIN
+y = np.convolve(x2, kernel, mode="same")
+
+t = np.arange(len(x2)) / FS
+m = (t >= T0) & (t <= T1) if T1 is not None else slice(None)
+
+plt.figure(figsize=(12,4))
+#plt.plot(t[m], x[m], label="Original", linewidth=0.6, alpha=0.5)
+plt.plot(t[m], x2[m], label="Outliers interpolados", linewidth=0.7)
+plt.plot(t[m], y[m], label=f"Média móvel ({WIN} amostras)", linewidth=0.9)
+plt.xlabel("Tempo (s)")
+plt.ylabel("Sinal")
+plt.title("Filtro de Média Móvel - outliers removidos e interpolados")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
