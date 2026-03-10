@@ -7,9 +7,9 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_auc_sco
 import joblib
 
 
-# =========================
+# ==========================
 # 1) Feature extraction
-# =========================
+# ==========================
 def extract_features(x: np.ndarray) -> dict:
     x = np.asarray(x, dtype=np.float64)
     if x.size < 3:
