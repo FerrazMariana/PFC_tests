@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.metrics import classification_report, confusion_matrix
 import joblib
+from sklearn.svm import SVC
 
 
 # =========================
@@ -28,6 +29,7 @@ def extract_features(x: np.ndarray) -> dict:
     std = float(np.std(x, ddof=1)) if x.size > 1 else 0.0
     xmin = float(np.min(x))
     xmax = float(np.max(x))
+    ptp = float(xmax - xmin)
 
     abs_mean = float(np.mean(np.abs(x)))
     abs_max = float(np.max(np.abs(x)))
@@ -47,11 +49,12 @@ def extract_features(x: np.ndarray) -> dict:
     zcr_median = float(zc) / float(x.size - 1)
 
     return {
-        "n": int(x.size),
-        "mean": mean, "std": std, "min": xmin, "max": xmax,
-        "abs_mean": abs_mean, "abs_max": abs_max,
-        "skew": skew, "kurt": kurt,
-        "dx_abs_mean": dx_abs_mean, "dx_abs_max": dx_abs_max,
+        "mean": mean,  
+        "min": xmin, 
+        "ptp": ptp,
+        "skew": skew, 
+        "kurt": kurt,
+        "dx_abs_max": dx_abs_max,
         "zcr_median": zcr_median
     }
 
@@ -60,7 +63,7 @@ def extract_features(x: np.ndarray) -> dict:
 # 2) Load CSV
 # =========================
 
-dataset = "meu_arquivo4.csv"
+dataset = "dataset_juntos.csv"
 df = pd.read_csv(dataset)
 
 rows = []
@@ -89,39 +92,53 @@ print("Distribuição classes:\n", y.value_counts(normalize=True).rename("propor
 # =========================
 # 3) Train/test split + SVM (LinearSVC leve)
 # =========================
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
-    test_size=0.25,
-    random_state=42,
-    stratify=y if y.nunique() > 1 else None
-)
+for seed in range(10):
 
-svm_model = Pipeline(steps=[
-    ("scaler", StandardScaler()),
-    ("clf", LinearSVC(
-        class_weight="balanced",
-        random_state=42,
-        C=1.0
-    ))
-])
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=0.25,
+        random_state=seed,
+        stratify=y if y.nunique() > 1 else None
+    )
 
-svm_model.fit(X_train, y_train)
+    # svm_model = Pipeline(steps=[
+    #     ("scaler", StandardScaler()),
+    #     ("clf", LinearSVC(
+    #         class_weight="balanced",
+    #         random_state=42,
+    #         C=1.0
+    #     ))
+    # ])
+
+    svm_model = Pipeline(steps=[
+        ("scaler", StandardScaler()),
+        ("clf", SVC(
+            kernel="rbf",            # Fronteira curva, essencial para sinais complexos
+            C=20,                  # Permite um ajuste um pouco mais firme aos padrões da piscada
+            gamma="scale",           # Deixa o modelo calcular automaticamente o raio de influência
+            class_weight="balanced", # Compensa o fato de que a maioria do sinal não é piscada dupla
+            random_state=42
+        ))
+    ])
+
+    svm_model.fit(X_train, y_train)
 
 
-# =========================
-# 4) Evaluate
-# =========================
-y_pred = svm_model.predict(X_test)
+    # =========================
+    # 4) Evaluate
+    # =========================
+    y_pred = svm_model.predict(X_test)
 
-labels = [0, 1]
-label_names = ["nao_piscada", "piscada"]
+    labels = [0, 1]
+    label_names = ["nao_piscada", "piscada"]
 
-cm = confusion_matrix(y_test, y_pred, labels=labels)
-cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
-print("\nMatriz de confusão (linhas=real, colunas=predito):\n")
-print(cm_df)
+    cm = confusion_matrix(y_test, y_pred, labels=labels)
+    cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
+    print("\nMatriz de confusão (linhas=real, colunas=predito):\n")
+    print(cm_df)
 
-print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
+    print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
+    
 
 
 # =========================

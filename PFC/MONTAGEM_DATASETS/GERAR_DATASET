@@ -22,17 +22,35 @@ def to_binary_label(v) -> int:
 
 
 
-paths = [
-    "data/dados_crus/d_c_500_1m_janela/d_c_500_1m_classificado.csv",
-    "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_1_janela/d_p_d_500_1m_1_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_2_janela/d_p_d_500_1m_2_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_3_janela/d_p_d_500_1m_3_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_4_janela/d_p_d_500_1m_4_classificado.csv",
-    "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_classificado.csv",
-]
+# paths = [
+#     "data\mariana\classificado\careta.csv",
+#     "data\mariana\classificado/fundo.csv",
+#     "data\mariana\classificado\olhar.csv",
+#     "data\mariana\classificado\picada_dupla_1_500_2.csv",
+#     "data\mariana\classificado\picada_dupla_1_500_3.csv",
+#     "data\mariana\classificado\picada_dupla_1_500.csv",
+#     "data\mariana\classificado\piscada_dupla_2_500_2.csv",
+#     "data\mariana\classificado\piscada_dupla_2_500_3.csv",
+#     "data\mariana\classificado\piscada_dupla_2_500.csv",
+#     "data\pedro\classificado\careta_pedro.csv",
+#     "data\pedro\classificado/fundo_pedro.csv",
+#     "data\pedro\classificado\olhar_pedro.csv",
+#     "data\pedro\classificado\piscada_dupla_1_pedro_2.csv",
+#     "data\pedro\classificado\piscada_dupla_1_pedro_3.csv",
+#     "data\pedro\classificado\piscada_dupla_1_pedro.csv",
+#     "data\pedro\classificado\piscada_dupla_2_pedro_2.csv",
+#     "data\pedro\classificado\piscada_dupla_2_pedro_3.csv",
+#     "data\pedro\classificado\piscada_dupla_2_pedro.csv"
+# ]
 
-SEQ_LEN = 250  # tamanho final por janela (amostras)
+
+paths = [
+     "dataset_mariana.csv",
+     "dataset_pedro_f.csv"
+ ]
+
+
+SEQ_LEN = 500  # tamanho final por janela (amostras)
 
 dfs = []
 offset = 0
@@ -57,4 +75,4 @@ df = pd.concat(dfs, ignore_index=True)
 df = df.sort_values(["janela", "t_s"], kind="mergesort").reset_index(drop=True)
 df["class_bin"] = df["classificacao"].apply(to_binary_label)
 
-df.to_csv("meu_arquivo4.csv", index=False, encoding="utf-8", sep=",")
+df.to_csv("dataset_juntos.csv", index=False, encoding="utf-8", sep=",")

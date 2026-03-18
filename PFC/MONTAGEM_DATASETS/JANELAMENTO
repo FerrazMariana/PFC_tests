@@ -5,9 +5,9 @@ import pandas as pd
 #CADA NOVA JANELA
 
 
-ARQUIVO_ENTRADA = "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_s_outlier.csv"  
-ARQUIVO_SAIDA   = "data/dados_crus/d_p_d_500_1m_5_janela/d_p_d_500_1m_5_janela.csv"
-JANELA_S = 0.500
+ARQUIVO_ENTRADA = "data/mariana/filtrado/careta.csv"  
+ARQUIVO_SAIDA   = "data/mariana/janelamento/careta.csv"
+JANELA_S = 1
 
 df = pd.read_csv(ARQUIVO_ENTRADA)
 

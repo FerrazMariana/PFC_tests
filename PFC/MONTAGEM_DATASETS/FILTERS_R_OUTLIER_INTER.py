@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500
-ARQUIVO = "data/dataset/dataset_movimento_olhos_500_1m.csv"  # seu CSV (1 coluna)
+ARQUIVO = "data\mariana\careta.csv"  # seu CSV (1 coluna)
 
 # ---------- Limites de outlier (ajuste) ----------
-LIM_INF = -0.002
-LIM_SUP =  0.001
+LIM_INF = -0.0007
+LIM_SUP = 0.0006
 
 # Rejeita-faixa (rede elétrica)
 NOTCH_LOW  = 59.0
@@ -79,22 +79,23 @@ t = np.arange(len(x)) / FS
 m = (t >= T0) & (t <= T1) if T1 is not None else slice(None)
 
 # --------- Notch ----------
-x_notch = bandstop(x, FS, NOTCH_LOW, NOTCH_HIGH, ORDER_NOTCH)
+#x_notch = bandstop(x, FS, NOTCH_LOW, NOTCH_HIGH, ORDER_NOTCH)
 
 # --------- Filtragens (a) e (b) ----------
-y_a = hp_then_lp(x_notch, FS, HP_A, LP, ORDER_HP, ORDER_LP)
+#y_a = hp_then_lp(x_notch, FS, HP_A, LP, ORDER_HP, ORDER_LP)
+y_a = hp_then_lp(x, FS, HP_A, LP, ORDER_HP, ORDER_LP)
 
 # --------- FFTs ----------
 f_x, mag_x = fft_mag(x, FS)
-f_n, mag_n = fft_mag(x_notch, FS)
+#f_n, mag_n = fft_mag(x_notch, FS)
 f_a, mag_a = fft_mag(y_a, FS)
 
 # --------- Plot ----------
 plt.figure(figsize=(12, 9))
 
 plt.subplot(2, 1, 1)
-#plt.plot(t[m], y_a[m], linewidth=0.9)
-plt.plot(t[m], x[m], linewidth=0.9)
+plt.plot(t[m], y_a[m], linewidth=0.9)
+#plt.plot(t[m], x[m], linewidth=0.9)
 plt.title(f"(a) Bandstop {NOTCH_LOW:.0f}–{NOTCH_HIGH:.0f} Hz + HP={HP_A} Hz + LP={LP} Hz")
 plt.ylabel("Sinal")
 plt.grid(True)
@@ -102,7 +103,7 @@ plt.grid(True)
 
 plt.subplot(2, 1, 2)
 plt.plot(f_x, mag_x, linewidth=0.8, label="FFT (após outlier interp.)")
-plt.plot(f_n, mag_n, linewidth=0.8, label=f"FFT Após bandstop {NOTCH_LOW:.0f}–{NOTCH_HIGH:.0f}")
+#plt.plot(f_n, mag_n, linewidth=0.8, label=f"FFT Após bandstop {NOTCH_LOW:.0f}–{NOTCH_HIGH:.0f}")
 plt.plot(f_a, mag_a, linewidth=0.9, label=f"FFT (a) HP {HP_A} / LP {LP}")
 plt.xlim(0, min(F_MAX, FS/2))
 plt.xlabel("Frequência (Hz)")
@@ -115,11 +116,11 @@ plt.tight_layout()
 plt.show()
 
 # --------- Salvar apenas tempo e sinal ----------
-OUT_CSV = "data/dados_crus/d_m_o_500_1m_janela/d_m_o_500_1m_s_outlier.csv"
+OUT_CSV = "data/mariana/filtrado/careta.csv"
 
-#dados = np.column_stack([t, y_a])  # tempo, sinal final (COM TODOS OS FILTROS)
+dados = np.column_stack([t, y_a])  # tempo, sinal final (COM TODOS OS FILTROS)
 #dados = np.column_stack([t, x])  # tempo, sinal final apenas sem os outliers
-#np.savetxt(OUT_CSV, dados, delimiter=",", header="t_s,sinal_filtrado", comments="")
+np.savetxt(OUT_CSV, dados, delimiter=",", header="t_s,sinal_filtrado", comments="")
 
 
 
