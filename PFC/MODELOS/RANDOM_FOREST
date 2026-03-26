@@ -174,16 +174,21 @@ import time
 # Cria o modelo (assumindo uma janela de 250 pontos)
 
 # Cria um "sinal EOG" aleatório apenas para testar a velocidade
-janela_teste = np.random.rand(1, 500, 1)
+df = pd.read_csv("dataset_teste.csv")
+
+janela_teste = df["sinal_filtrado"].to_numpy(dtype=np.float32)  # (500,)
+
+feats = extract_features(janela_teste)
+janela_teste = pd.DataFrame([feats]) 
 
 # Aquecimento (a primeira predição no TensorFlow sempre é mais lenta)
-_ = rf.predict_proba(X_test)[:, 1]
+_ = rf.predict_proba(janela_teste)
 
 # Cronometrando 100 inferências em tempo real
 tempos = []
 for _ in range(100):
     inicio = time.time()
-    _ = rf.predict_proba(X_test)[:, 1]
+    _ = rf.predict_proba(janela_teste)
     fim = time.time()
     tempos.append(fim - inicio)
 

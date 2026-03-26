@@ -3,11 +3,14 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500
-ARQUIVO = "data\mariana\careta.csv"  # seu CSV (1 coluna)
+ARQUIVO = "data\mariana\picada_dupla_1_500.csv"  # seu CSV (1 coluna)
 
 # ---------- Limites de outlier (ajuste) ----------
-LIM_INF = -0.0007
-LIM_SUP = 0.0006
+#LIM_INF = -0.0007
+#LIM_SUP = 0.0006
+
+LIM_INF = -0.0006
+LIM_SUP = 0.0002
 
 # Rejeita-faixa (rede elétrica)
 NOTCH_LOW  = 59.0
@@ -120,7 +123,7 @@ OUT_CSV = "data/mariana/filtrado/careta.csv"
 
 dados = np.column_stack([t, y_a])  # tempo, sinal final (COM TODOS OS FILTROS)
 #dados = np.column_stack([t, x])  # tempo, sinal final apenas sem os outliers
-np.savetxt(OUT_CSV, dados, delimiter=",", header="t_s,sinal_filtrado", comments="")
+#np.savetxt(OUT_CSV, dados, delimiter=",", header="t_s,sinal_filtrado", comments="")
 
 
 

@@ -8,6 +8,8 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import classification_report, confusion_matrix
 import joblib
 from sklearn.svm import SVC
+import time
+
 
 
 # =========================
@@ -39,7 +41,6 @@ def extract_features(x: np.ndarray) -> dict:
     kurt = float(s.kurt()) if x.size >= 4 else 0.0
 
     dx = np.diff(x)
-    dx_abs_mean = float(np.mean(np.abs(dx)))
     dx_abs_max = float(np.max(np.abs(dx)))
 
     med = np.median(x)
@@ -84,6 +85,36 @@ feat_df = pd.DataFrame(rows)
 
 y = feat_df["y"].astype(int)
 X = feat_df.drop(columns=["y", "janela"])
+
+import matplotlib.pyplot as plt
+
+X_plot = X.rename(columns={
+    "mean": "Média",
+    "min": "Mínimo",
+    "ptp": "Amplitude pico a pico",
+    "skew": "Assimetria",
+    "kurt": "Curtose",
+    "dx_abs_max": "Máx. diferença absoluta",
+    "zcr_median": "Taxa de cruzamentos da mediana"
+})
+
+corr = X_plot.corr(method="pearson")   # também pode usar method="spearman"
+
+plt.figure(figsize=(8, 6))
+im = plt.imshow(corr, cmap="coolwarm", vmin=-1, vmax=1)
+plt.colorbar(im, label="Correlação")
+
+plt.xticks(range(len(corr.columns)), corr.columns, rotation=45, ha="right")
+plt.yticks(range(len(corr.index)), corr.index)
+
+# escrever os valores dentro da matriz
+for i in range(len(corr.index)):
+    for j in range(len(corr.columns)):
+        plt.text(j, i, f"{corr.iloc[i, j]:.2f}", ha="center", va="center", fontsize=9)
+
+#plt.title("Matriz de correlação entre as características extraídas")
+plt.tight_layout()
+plt.show()
 
 print("Amostras (janelas):", len(feat_df))
 print("Distribuição classes:\n", y.value_counts(normalize=True).rename("proporção"))
@@ -139,6 +170,28 @@ for seed in range(10):
 
     print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
     
+
+    # Cria um "sinal EOG" aleatório apenas para testar a velocidade
+df = pd.read_csv("dataset_teste.csv")
+
+janela_teste = df["sinal_filtrado"].to_numpy(dtype=np.float32)  # (500,)
+
+feats = extract_features(janela_teste)
+janela_teste = pd.DataFrame([feats]) 
+
+# Aquecimento (a primeira predição no TensorFlow sempre é mais lenta)
+_ = svm_model.predict(janela_teste)
+
+# Cronometrando 100 inferências em tempo real
+tempos = []
+for _ in range(100):
+    inicio = time.time()
+    _ = svm_model.predict(janela_teste)
+    fim = time.time()
+    tempos.append(fim - inicio)
+
+tempo_medio_ms = np.mean(tempos) * 1000
+print(f"Tempo médio de inferência por janela: {tempo_medio_ms:.2f} milissegundos")
 
 
 # =========================

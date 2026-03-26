@@ -191,19 +191,23 @@ if np.unique(y_test).size > 1:
 import time
 
 # Cria o modelo (assumindo uma janela de 250 pontos)
-modelo = build_cnn_1d(seq_len=500)
+#modelo = build_cnn_1d(seq_len=500)
 
-# Cria um "sinal EOG" aleatório apenas para testar a velocidade
-janela_teste = np.random.rand(1, 500, 1)
+
+df = pd.read_csv("dataset_teste.csv")
+
+janela_teste = df["sinal_filtrado"].to_numpy(dtype=np.float32)  # (500,)
+janela_teste = janela_teste.reshape(1, 500, 1)                  # (1, 500, 1)
+
 
 # Aquecimento (a primeira predição no TensorFlow sempre é mais lenta)
-_ = modelo.predict(janela_teste, verbose=0) 
+_ = model.predict(janela_teste, verbose=0) 
 
 # Cronometrando 100 inferências em tempo real
 tempos = []
 for _ in range(100):
     inicio = time.time()
-    _ = modelo.predict(janela_teste, verbose=0)
+    _ = model.predict(janela_teste, verbose=0)
     fim = time.time()
     tempos.append(fim - inicio)
 
