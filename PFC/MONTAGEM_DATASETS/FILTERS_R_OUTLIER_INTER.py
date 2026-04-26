@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500
-ARQUIVO = "data\mariana\picada_dupla_1_500.csv"  # seu CSV (1 coluna)
+ARQUIVO = "data\pedro\piscada_dupla_1_pedro.csv"  # seu CSV (1 coluna)
 
 # ---------- Limites de outlier (ajuste) ----------
 #LIM_INF = -0.0007
 #LIM_SUP = 0.0006
 
-LIM_INF = -0.0006
-LIM_SUP = 0.0002
+LIM_INF = -0.002
+LIM_SUP = -0.001
 
 # Rejeita-faixa (rede elétrica)
 NOTCH_LOW  = 59.0
@@ -76,7 +76,9 @@ x = x - np.mean(x)
 
 # --------- Remove outliers por interpolação ----------
 x, out_mask = remove_outliers_interp(x, LIM_INF, LIM_SUP)
-print(f"Outliers interpolados: {np.sum(out_mask)} / {len(out_mask)} ({100*np.mean(out_mask):.2f}%)")
+
+print("Total de pontos em sig2:", len(x))
+print("Quantidade de outliers:", out_mask.sum())
 
 t = np.arange(len(x)) / FS
 m = (t >= T0) & (t <= T1) if T1 is not None else slice(None)

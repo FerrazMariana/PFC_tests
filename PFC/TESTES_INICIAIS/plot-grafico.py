@@ -3,10 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 fs = 500  # Hz
-arquivo = "data/tests/ECG500_1.csv"
+arquivo = r"data\pedro\filtrado\piscada_dupla_1_pedro.csv"
 
-x = pd.read_csv(arquivo, header=None).iloc[:, 0].astype(float).to_numpy()
-t = np.arange(len(x)) / fs
+df = pd.read_csv(arquivo)
+
+print(df.head())       # para ver as colunas
+print(df.columns)      # para confirmar os nomes
+
+t = df.iloc[:, 0].astype(float).to_numpy()   # primeira coluna = tempo
+x = df.iloc[:, 1].astype(float).to_numpy()   # segunda coluna = sinal
 
 plt.plot(t, x)
 plt.xlabel("Tempo (s)")

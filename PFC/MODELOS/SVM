@@ -123,52 +123,52 @@ print("Distribuição classes:\n", y.value_counts(normalize=True).rename("propor
 # =========================
 # 3) Train/test split + SVM (LinearSVC leve)
 # =========================
-for seed in range(10):
+#for seed in range(10):
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=0.25,
-        random_state=seed,
-        stratify=y if y.nunique() > 1 else None
-    )
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.25,
+    random_state=42,
+    stratify=y if y.nunique() > 1 else None
+)
 
-    # svm_model = Pipeline(steps=[
-    #     ("scaler", StandardScaler()),
-    #     ("clf", LinearSVC(
-    #         class_weight="balanced",
-    #         random_state=42,
-    #         C=1.0
-    #     ))
-    # ])
+# svm_model = Pipeline(steps=[
+#     ("scaler", StandardScaler()),
+#     ("clf", LinearSVC(
+#         class_weight="balanced",
+#         random_state=42,
+#         C=1.0
+#     ))
+# ])
 
-    svm_model = Pipeline(steps=[
-        ("scaler", StandardScaler()),
-        ("clf", SVC(
-            kernel="rbf",            # Fronteira curva, essencial para sinais complexos
-            C=20,                  # Permite um ajuste um pouco mais firme aos padrões da piscada
-            gamma="scale",           # Deixa o modelo calcular automaticamente o raio de influência
-            class_weight="balanced", # Compensa o fato de que a maioria do sinal não é piscada dupla
-            random_state=42
-        ))
-    ])
+svm_model = Pipeline(steps=[
+    ("scaler", StandardScaler()),
+    ("clf", SVC(
+        kernel="rbf",            # Fronteira curva, essencial para sinais complexos
+        C=20,                  # Permite um ajuste um pouco mais firme aos padrões da piscada
+        gamma="scale",           # Deixa o modelo calcular automaticamente o raio de influência
+        class_weight="balanced", # Compensa o fato de que a maioria do sinal não é piscada dupla
+        random_state=42
+    ))
+])
 
-    svm_model.fit(X_train, y_train)
+svm_model.fit(X_train, y_train)
 
 
-    # =========================
-    # 4) Evaluate
-    # =========================
-    y_pred = svm_model.predict(X_test)
+# =========================
+# 4) Evaluate
+# =========================
+y_pred = svm_model.predict(X_test)
 
-    labels = [0, 1]
-    label_names = ["nao_piscada", "piscada"]
+labels = [0, 1]
+label_names = ["nao_piscada", "piscada"]
 
-    cm = confusion_matrix(y_test, y_pred, labels=labels)
-    cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
-    print("\nMatriz de confusão (linhas=real, colunas=predito):\n")
-    print(cm_df)
+cm = confusion_matrix(y_test, y_pred, labels=labels)
+cm_df = pd.DataFrame(cm, index=label_names, columns=label_names)
+print("\nMatriz de confusão (linhas=real, colunas=predito):\n")
+print(cm_df)
 
-    print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
+print("\nClassification report:\n", classification_report(y_test, y_pred, digits=4))
     
 
     # Cria um "sinal EOG" aleatório apenas para testar a velocidade
