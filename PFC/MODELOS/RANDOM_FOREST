@@ -16,29 +16,11 @@ def extract_features(x: np.ndarray) -> dict:
     x: array 1D com amostras do sinal EOG na janela.
     """
     x = np.asarray(x, dtype=np.float64)
-    if x.size < 3:
-        # janela pequena demais: retorna zeros (ou trate como erro)
-        return {
-            "n": int(x.size),
-            "mean": 0.0, "std": 0.0, "min": 0.0, "max": 0.0, "ptp": 0.0,
-            "rms": 0.0, "energy": 0.0,
-            "abs_mean": 0.0, "abs_max": 0.0,
-            "skew": 0.0, "kurt": 0.0,
-            "dx_abs_mean": 0.0, "dx_abs_max": 0.0,
-            "zcr_median": 0.0
-        }
 
     mean = float(np.mean(x))
-    std = float(np.std(x, ddof=1)) if x.size > 1 else 0.0
     xmin = float(np.min(x))
     xmax = float(np.max(x))
     ptp = float(xmax - xmin)
-
-    rms = float(np.sqrt(np.mean(x * x)))
-    energy = float(np.sum(x * x))
-
-    abs_mean = float(np.mean(np.abs(x)))
-    abs_max = float(np.max(np.abs(x)))
 
     # skew/kurt via pandas (evita depender de scipy)
     s = pd.Series(x)
@@ -47,13 +29,11 @@ def extract_features(x: np.ndarray) -> dict:
 
     # Derivada discreta
     dx = np.diff(x)
-    dx_abs_mean = float(np.mean(np.abs(dx)))
     dx_abs_max = float(np.max(np.abs(dx)))
 
     # Zero-crossing rate em torno da mediana (robusto a baseline)
     med = np.median(x)
     signs = np.sign(x - med)
-    # remove zeros para não contar trocas falsas
     signs[signs == 0] = 1
     zc = np.sum(signs[1:] != signs[:-1])
     zcr_median = float(zc) / float(x.size - 1)
@@ -73,7 +53,7 @@ def extract_features(x: np.ndarray) -> dict:
 # 2) Load CSV 
 # =========================
 
-dataset = "dataset_juntos.csv"  
+dataset = "dataset_juntos2.csv"  
 df = pd.read_csv(dataset)
 
 # Agrupa por janela: extrai features do sinal e define label pela moda
@@ -83,7 +63,7 @@ for win_id, g in df.groupby("janela", sort=False):
     feats = extract_features(x)
 
     # label da janela: moda (maioria) de class_bin
-    y = int(g["class_bin"].mode().iloc[0]) if len(g) else 0
+    y = int(g["classificacao"].mode().iloc[0]) if len(g) else 0
 
     feats["janela"] = win_id
     feats["y"] = y

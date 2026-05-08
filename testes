@@ -1,6 +1,0 @@
-import pandas as pd
-
-dataset = "dataset_juntos.csv"
-df = pd.read_csv(dataset)
-
-print(df.head(10))

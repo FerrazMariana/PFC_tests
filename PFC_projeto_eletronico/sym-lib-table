@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "ADS1299-rescue")(type "Legacy")(uri "${KIPRJMOD}/PFC_projeto-rescue.lib")(options "")(descr ""))
+)

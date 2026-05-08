@@ -1,4 +1,6 @@
 """
+Arquivo modificado por Mariana e Pedro
+Link para o github do autor do projeto: https://github.com/wjcroft/RaspberryPiADS1299.git
 # file: ADS1299_API.py
 # author: Frederic Simard (frederic.simard.1@outlook.com)
 # version: Fall 2017
@@ -62,6 +64,8 @@
     - spidev:  https://pypi.python.org/pypi/spidev
     - how to configure SPI on raspberry Pi: https://www.raspberrypi.org/documentation/hardware/raspberrypi/spi/README.md
       Note: I had to $sudo chmod 777 /dev/spide0.0 and reboot the raspberry pi to get access to the SPI device
+
+
 """
 
 import struct
