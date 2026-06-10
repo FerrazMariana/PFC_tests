@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, sosfiltfilt
 
 FS = 500
-ARQUIVO = "data\pedro\piscada_dupla_1_pedro.csv"  # seu CSV (1 coluna)
+ARQUIVO = "data\mariana\picada_dupla_1_500.csv"  # seu CSV (1 coluna)
 
 # ---------- Limites de outlier (ajuste) ----------
-#LIM_INF = -0.0007
-#LIM_SUP = 0.0006
+LIM_INF = -0.0007
+LIM_SUP = 0.0006
 
-LIM_INF = -0.002
-LIM_SUP = -0.001
+#LIM_INF = -0.002
+#LIM_SUP = -0.001
 
 # Rejeita-faixa (rede elétrica)
 NOTCH_LOW  = 59.0
@@ -24,8 +24,8 @@ ORDER_HP = 4
 ORDER_LP = 4
 
 # Plot (zoom opcional no tempo e na FFT)
-T0 = 0
-T1 = 300
+T0 = 12
+T1 = 20
 F_MAX = 200
 
 def bandstop(sig, fs, low, high, order=4):
@@ -121,9 +121,9 @@ plt.tight_layout()
 plt.show()
 
 # --------- Salvar apenas tempo e sinal ----------
-OUT_CSV = "data/mariana/filtrado/careta.csv"
+#OUT_CSV = "data/mariana/filtrado/careta.csv"
 
-dados = np.column_stack([t, y_a])  # tempo, sinal final (COM TODOS OS FILTROS)
+#dados = np.column_stack([t, y_a])  # tempo, sinal final (COM TODOS OS FILTROS)
 #dados = np.column_stack([t, x])  # tempo, sinal final apenas sem os outliers
 #np.savetxt(OUT_CSV, dados, delimiter=",", header="t_s,sinal_filtrado", comments="")
 

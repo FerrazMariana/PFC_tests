@@ -54,4 +54,4 @@ for p in paths:
 
 df = pd.concat(dfs, ignore_index=True)
 df = df.sort_values(["janela", "t_s"], kind="mergesort").reset_index(drop=True)
-df.to_csv("dataset_juntos2.csv", index=False, encoding="utf-8", sep=",")
+df.to_csv("dataset_juntos.csv", index=False, encoding="utf-8", sep=",")

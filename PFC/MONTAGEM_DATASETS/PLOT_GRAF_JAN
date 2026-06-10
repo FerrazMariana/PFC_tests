@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-ARQUIVO = "data\mariana\janelamento\piscada_dupla_2_500_3.csv"
+ARQUIVO = "data\pedro\janelamento/fundo_pedro.csv"
 COL_JANELA = "janela"
 
 df = pd.read_csv(ARQUIVO)

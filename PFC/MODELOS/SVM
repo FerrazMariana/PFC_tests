@@ -64,7 +64,7 @@ def extract_features(x: np.ndarray) -> dict:
 # 2) Load CSV
 # =========================
 
-dataset = "dataset_juntos2.csv"
+dataset = "dataset_juntos.csv"
 df = pd.read_csv(dataset)
 
 rows = []
@@ -172,26 +172,26 @@ print("\nClassification report:\n", classification_report(y_test, y_pred, digits
     
 
     # Cria um "sinal EOG" aleatório apenas para testar a velocidade
-df = pd.read_csv("dataset_teste.csv")
+# df = pd.read_csv("dataset_teste.csv")
 
-janela_teste = df["sinal_filtrado"].to_numpy(dtype=np.float32)  # (500,)
+# janela_teste = df["sinal_filtrado"].to_numpy(dtype=np.float32)  # (500,)
 
-feats = extract_features(janela_teste)
-janela_teste = pd.DataFrame([feats]) 
+# feats = extract_features(janela_teste)
+# janela_teste = pd.DataFrame([feats]) 
 
-# Aquecimento (a primeira predição no TensorFlow sempre é mais lenta)
-_ = svm_model.predict(janela_teste)
+# # Aquecimento (a primeira predição no TensorFlow sempre é mais lenta)
+# _ = svm_model.predict(janela_teste)
 
-# Cronometrando 100 inferências em tempo real
-tempos = []
-for _ in range(100):
-    inicio = time.time()
-    _ = svm_model.predict(janela_teste)
-    fim = time.time()
-    tempos.append(fim - inicio)
+# # Cronometrando 100 inferências em tempo real
+# tempos = []
+# for _ in range(100):
+#     inicio = time.time()
+#     _ = svm_model.predict(janela_teste)
+#     fim = time.time()
+#     tempos.append(fim - inicio)
 
-tempo_medio_ms = np.mean(tempos) * 1000
-print(f"Tempo médio de inferência por janela: {tempo_medio_ms:.2f} milissegundos")
+# tempo_medio_ms = np.mean(tempos) * 1000
+# print(f"Tempo médio de inferência por janela: {tempo_medio_ms:.2f} milissegundos")
 
 
 # =========================

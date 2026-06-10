@@ -52,7 +52,7 @@ def per_window_zscore(x: np.ndarray, eps: float = 1e-8) -> np.ndarray:
 
 SEQ_LEN = 500  # tamanho final por janela (amostras)
 
-dataset = "dataset_juntos2.csv"  
+dataset = "dataset_juntos.csv"  
 df = pd.read_csv(dataset)
 
 
@@ -194,25 +194,25 @@ import time
 #modelo = build_cnn_1d(seq_len=500)
 
 
-df = pd.read_csv("dataset_teste.csv")
+# df = pd.read_csv("dataset_teste.csv")
 
-janela_teste = df["sinal_filtrado"].to_numpy(dtype=np.float32)  # (500,)
-janela_teste = janela_teste.reshape(1, 500, 1)                  # (1, 500, 1)
+# janela_teste = df["sinal_filtrado"].to_numpy(dtype=np.float32)  # (500,)
+# janela_teste = janela_teste.reshape(1, 500, 1)                  # (1, 500, 1)
 
 
-# Aquecimento (a primeira predição no TensorFlow sempre é mais lenta)
-_ = model.predict(janela_teste, verbose=0) 
+# # Aquecimento (a primeira predição no TensorFlow sempre é mais lenta)
+# _ = model.predict(janela_teste, verbose=0) 
 
-# Cronometrando 100 inferências em tempo real
-tempos = []
-for _ in range(100):
-    inicio = time.time()
-    _ = model.predict(janela_teste, verbose=0)
-    fim = time.time()
-    tempos.append(fim - inicio)
+# # Cronometrando 100 inferências em tempo real
+# tempos = []
+# for _ in range(100):
+#     inicio = time.time()
+#     _ = model.predict(janela_teste, verbose=0)
+#     fim = time.time()
+#     tempos.append(fim - inicio)
 
-tempo_medio_ms = np.mean(tempos) * 1000
-print(f"Tempo médio de inferência por janela: {tempo_medio_ms:.2f} milissegundos")
+# tempo_medio_ms = np.mean(tempos) * 1000
+# print(f"Tempo médio de inferência por janela: {tempo_medio_ms:.2f} milissegundos")
 
 # =========================
 # 7) Salvar modelo
